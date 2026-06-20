@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm, premium neutrals — gold used only as an accent (--gold / --ring). */
+    --background: 40 25% 99%;
+    --foreground: 28 12% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 28 12% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 28 12% 12%;
+    --primary: 28 14% 14%;
+    --primary-foreground: 40 30% 98%;
+    --secondary: 40 16% 95%;
+    --secondary-foreground: 28 14% 14%;
+    --muted: 40 14% 95.5%;
+    --muted-foreground: 30 6% 44%;
+    --accent: 40 18% 94%;
+    --accent-foreground: 28 14% 14%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 30% 98%;
+    --border: 38 16% 90%;
+    --input: 38 16% 90%;
+    --ring: 37 44% 54%;
+    --gold: 37 44% 52%;
+    --gold-foreground: 40 30% 99%;
+    --radius: 0.7rem;
+  }
+
+  .dark {
+    --background: 30 10% 7%;
+    --foreground: 40 18% 92%;
+    --card: 30 9% 9.5%;
+    --card-foreground: 40 18% 92%;
+    --popover: 30 9% 9.5%;
+    --popover-foreground: 40 18% 92%;
+    --primary: 40 30% 94%;
+    --primary-foreground: 28 14% 12%;
+    --secondary: 30 7% 15%;
+    --secondary-foreground: 40 18% 92%;
+    --muted: 30 7% 14%;
+    --muted-foreground: 40 8% 58%;
+    --accent: 30 7% 15%;
+    --accent-foreground: 40 18% 92%;
+    --destructive: 0 62% 47%;
+    --destructive-foreground: 40 30% 98%;
+    --border: 30 7% 16%;
+    --input: 30 7% 16%;
+    --ring: 38 50% 58%;
+    --gold: 38 52% 60%;
+    --gold-foreground: 28 14% 10%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Rendered (sanitized) HTML email body */
+.email-body {
+  line-height: 1.6;
+  word-break: break-word;
+}
+.email-body img {
+  max-width: 100%;
+  height: auto;
+}
+.email-body a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+.email-body table {
+  max-width: 100%;
+  border-collapse: collapse;
+}
+.email-body p,
+.email-body div {
+  max-width: 100%;
+}

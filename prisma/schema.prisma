@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// Auth.js (NextAuth) models
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts  Account[]
+  sessions  Session[]
+  emails    Email[]
+  syncState SyncState?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// Application models
+// ─────────────────────────────────────────────
+
+model Email {
+  id              String   @id @default(cuid())
+  userId          String
+  gmailId         String // Gmail message id
+  threadId        String?
+  subject         String   @db.Text
+  sender          String   @db.Text
+  senderEmail     String?
+  receivedAt      DateTime
+  preview         String   @db.Text
+  body            String   @db.Text
+  bodyHtml        String?  @db.Text
+  attachmentCount Int      @default(0)
+  attachments     Json? // [{ attachmentId, filename, mimeType, size }]
+  isRead          Boolean  @default(false)
+  repliedAt       DateTime? // set when the user sends a reply from the app
+
+  analysis  Analysis?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, gmailId])
+  @@index([userId, receivedAt])
+}
+
+model Analysis {
+  id              String   @id @default(cuid())
+  emailId         String   @unique
+  summary         String   @db.Text
+  priority        Priority
+  category        Category
+  requiresAction  Boolean  @default(false)
+  suggestedAction Action
+  deadline        Deadline @default(NONE)
+  model           String
+  createdAt       DateTime @default(now())
+
+  email Email @relation(fields: [emailId], references: [id], onDelete: Cascade)
+}
+
+model SyncState {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  historyId    String? // Gmail history id for incremental sync
+  lastSyncedAt DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Category {
+  FINANCE
+  HR
+  OPERATIONS
+  PRODUCTION
+  LEGAL
+  PROCUREMENT
+  OTHER
+}
+
+enum Action {
+  REPLY
+  APPROVE
+  DELEGATE
+  READ
+  IGNORE
+}
+
+enum Deadline {
+  TODAY
+  TOMORROW
+  THIS_WEEK
+  NONE
+}
