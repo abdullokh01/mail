@@ -88,6 +88,9 @@ export default async function DashboardPage() {
     unreadImportant: emails.filter(
       (e) => !e.isRead && e.analysis?.requiresAction
     ).length,
+    received: emails.length,
+    read: emails.filter((e) => e.isRead).length,
+    replied: emails.filter((e) => e.repliedAt).length,
   };
 
   // Category breakdown → top category for the brief.

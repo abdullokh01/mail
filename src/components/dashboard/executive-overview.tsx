@@ -9,6 +9,9 @@ import {
   Stamp,
   CalendarClock,
   Send,
+  Inbox,
+  MailOpen,
+  Reply,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +33,13 @@ const metrics = [
   { key: "approvals", label: "Approvals", icon: Stamp },
   { key: "dueToday", label: "Due Today", icon: CalendarClock },
   { key: "handledToday", label: "Handled Today", icon: Send },
+] as const;
+
+// Inbox activity: how many emails came in, were read, and were replied to.
+const activity = [
+  { key: "received", label: "Received", icon: Inbox },
+  { key: "read", label: "Read", icon: MailOpen },
+  { key: "replied", label: "Replied", icon: Reply },
 ] as const;
 
 export function ExecutiveOverview({ brief, attention, insights }: Props) {
@@ -58,6 +68,26 @@ export function ExecutiveOverview({ brief, attention, insights }: Props) {
           {/* insight metrics */}
           <div className="grid grid-cols-3 gap-2 border-t pt-4">
             {metrics.map((m) => {
+              const Icon = m.icon;
+              return (
+                <div key={m.key} className="rounded-lg bg-muted/50 p-2.5">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="text-[11px] uppercase tracking-wide">
+                      {m.label}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xl font-semibold tabular-nums">
+                    {insights[m.key]}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* inbox activity: received / read / replied */}
+          <div className="grid grid-cols-3 gap-2">
+            {activity.map((m) => {
               const Icon = m.icon;
               return (
                 <div key={m.key} className="rounded-lg bg-muted/50 p-2.5">

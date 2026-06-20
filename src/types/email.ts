@@ -47,4 +47,7 @@ export interface InsightStats {
   dueToday: number; // deadline = TODAY, requires action, not handled
   handledToday: number; // replied today
   unreadImportant: number; // unread + requires action
+  received: number; // total emails pulled into the inbox
+  read: number; // emails marked read
+  replied: number; // emails replied to from the app
 }

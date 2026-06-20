@@ -94,7 +94,7 @@ export function DashboardClient({
 
   const handleSync = async () => {
     setSyncing(true);
-    toast.info("Syncing Outlook…", { description: "Fetching latest emails" });
+    toast.info("Syncing inbox…", { description: "Fetching latest emails" });
     try {
       const res = await fetch("/api/sync", { method: "POST" });
       const data = await res.json();
@@ -128,7 +128,7 @@ export function DashboardClient({
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Sync Outlook</span>
+              <span className="hidden sm:inline">Sync Inbox</span>
             </Button>
             <ThemeToggle />
             <UserMenu {...user} />
@@ -148,7 +148,7 @@ export function DashboardClient({
           </h1>
           <p className="text-sm text-muted-foreground">
             {stats.total === 0
-              ? "No emails yet — hit “Sync Outlook” to pull your inbox."
+              ? "No emails yet — hit “Sync Inbox” to pull your inbox."
               : `You have ${stats.critical} critical and ${stats.needReply} email(s) needing a reply.`}
             {lastSyncedAt && (
               <span className="ml-1">
