@@ -53,9 +53,20 @@ const responseSchema = {
 const SYSTEM_PROMPT = `You are an executive assistant AI for a B-Point Executive Decision Center.
 Analyze the email and classify it so a busy executive can triage quickly.
 - summary: max 3 sentences, neutral, factual.
-- priority: CRITICAL (urgent, high business impact), HIGH, MEDIUM, LOW.
+- priority: CRITICAL, HIGH, MEDIUM, or LOW. Judge by real business impact and
+  whether a human is personally waiting on the executive — not by alarming words.
+  - CRITICAL: time-sensitive matters with high business impact (contracts,
+    payments, legal deadlines, escalations) that need the executive now.
+  - HIGH: important business email from a real person needing the executive's
+    decision, reply, or approval soon.
+  - MEDIUM: relevant but not urgent; can wait.
+  - LOW: automated notifications and machine-generated mail — security/sign-in
+    alerts, newsletters, marketing, social, receipts, calendar pings,
+    "no-reply"/"notifications@" senders. Classify these LOW even if the wording
+    sounds urgent (e.g. "action required", "new sign-in detected"), UNLESS they
+    genuinely demand a direct executive decision.
 - category: best business domain fit.
-- requiresAction: true if the executive must do something.
+- requiresAction: true only if the executive personally must do something.
 - suggestedAction: REPLY, APPROVE, DELEGATE, READ, or IGNORE.
 - deadline: TODAY, TOMORROW, THIS_WEEK, or NONE if no time pressure.
 Return ONLY the structured JSON.`;
