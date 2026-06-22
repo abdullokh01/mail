@@ -18,9 +18,9 @@ export default async function LoginPage() {
           <div className="flex flex-col items-center gap-4 text-center">
             <LogoMark className="h-14" />
             <div className="space-y-1.5">
-              <p className="text-lg font-semibold tracking-[0.18em]">B-POINT</p>
+              <p className="text-lg font-semibold tracking-[0.18em]">AURUM MAIL</p>
               <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                Executive Decision Center
+                Smart Inbox
               </p>
             </div>
           </div>

@@ -17,7 +17,7 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({
   className,
-  subtitle = "Executive Decision Center",
+  subtitle = "Smart Inbox",
 }: {
   className?: string;
   subtitle?: string | null;
@@ -26,7 +26,7 @@ export function Logo({
     <div className={cn("flex items-center gap-2.5", className)}>
       <LogoMark className="h-7" />
       <div className="leading-tight">
-        <p className="text-sm font-semibold tracking-[0.18em]">B-POINT</p>
+        <p className="text-sm font-semibold tracking-[0.18em]">AURUM MAIL</p>
         {subtitle && (
           <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             {subtitle}

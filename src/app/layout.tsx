@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "B-Point Executive Decision Center",
+  title: "Aurum Mail — Smart Inbox",
   description:
     "AI-powered email triage for executives. Know which emails need attention.",
 };

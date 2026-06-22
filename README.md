@@ -1,4 +1,4 @@
-# B-Point Executive Decision Center (MVP)
+# Aurum Mail — Smart Inbox (MVP)
 
 AI-powered email triage for executives. Connects to **Gmail** via the Google API,
 pulls your latest 100 emails, and uses **Gemini** to summarize, prioritize, and
