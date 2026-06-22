@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Paperclip, CornerUpLeft } from "lucide-react";
+import { Paperclip, CornerUpLeft, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -15,12 +15,22 @@ import type { EmailDTO } from "@/types/email";
 
 interface Props {
   email: EmailDTO;
+  onIgnore?: (id: string) => void;
 }
 
-export function EmailCard({ email }: Props) {
+export function EmailCard({ email, onIgnore }: Props) {
   const a = email.analysis;
   const unread = !email.isRead;
   const replied = !!email.repliedAt;
+  const reviewed = !!email.reviewedAt;
+  // Offer "Ignore" only while the email is still outstanding.
+  const canIgnore = !!onIgnore && !reviewed && !replied;
+
+  const handleIgnore = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onIgnore?.(email.id);
+  };
   const initials = email.sender
     .split(" ")
     .map((s) => s[0])
@@ -137,6 +147,16 @@ export function EmailCard({ email }: Props) {
                   <Badge variant="outline" className="text-muted-foreground">
                     Not analyzed
                   </Badge>
+                )}
+                {canIgnore && (
+                  <button
+                    type="button"
+                    onClick={handleIgnore}
+                    className="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <EyeOff className="h-3 w-3" />
+                    Ignore
+                  </button>
                 )}
               </div>
             </div>

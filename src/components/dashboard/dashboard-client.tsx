@@ -92,6 +92,33 @@ export function DashboardClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, filter]);
 
+  // Ignore = mark read + reviewed locally; recedes the card and drops it from
+  // the attention list. Optimistic, with a server refresh for the stat cards.
+  const handleIgnore = useCallback(
+    async (id: string) => {
+      setEmails((prev) =>
+        prev.map((e) =>
+          e.id === id
+            ? { ...e, isRead: true, reviewedAt: new Date().toISOString() }
+            : e
+        )
+      );
+      try {
+        const res = await fetch(`/api/emails/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isRead: true, reviewed: true }),
+        });
+        if (!res.ok) throw new Error("Failed");
+        router.refresh(); // refresh server stats + attention
+      } catch {
+        toast.error("Could not ignore email");
+        await fetchEmails(query, filter); // re-sync on failure
+      }
+    },
+    [router, fetchEmails, query, filter]
+  );
+
   const handleSync = async () => {
     setSyncing(true);
     toast.info("Syncing inbox…", { description: "Fetching latest emails" });
@@ -149,7 +176,7 @@ export function DashboardClient({
           <p className="text-sm text-muted-foreground">
             {stats.total === 0
               ? "No emails yet — hit “Sync Inbox” to pull your inbox."
-              : `You have ${stats.critical} critical and ${stats.needReply} email(s) needing a reply.`}
+              : `You have ${stats.critical.needsReview} critical and ${stats.reply.needsReview} email(s) needing a reply.`}
             {lastSyncedAt && (
               <span className="ml-1">
                 Last synced {formatRelativeTime(lastSyncedAt)}.
@@ -211,7 +238,11 @@ export function DashboardClient({
           ) : (
             <div className="space-y-3">
               {emails.map((email) => (
-                <EmailCard key={email.id} email={email} />
+                <EmailCard
+                  key={email.id}
+                  email={email}
+                  onIgnore={handleIgnore}
+                />
               ))}
             </div>
           )}

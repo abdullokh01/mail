@@ -85,6 +85,7 @@ model Email {
   attachmentCount Int      @default(0)
   attachments     Json? // [{ attachmentId, filename, mimeType, size }]
   isRead          Boolean  @default(false)
+  reviewedAt      DateTime? // set when the user opens or ignores the email in the app
   repliedAt       DateTime? // set when the user sends a reply from the app
 
   analysis  Analysis?

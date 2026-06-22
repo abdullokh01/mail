@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 interface Props {
   emailId: string;
   recipient: string | null;
+  /** Called after a reply is successfully sent (e.g. to refresh the thread). */
+  onSent?: () => void;
 }
 
 const STYLES: { value: string; label: string }[] = [
@@ -31,7 +33,7 @@ const STYLES: { value: string; label: string }[] = [
   { value: "request_info", label: "Request Info" },
 ];
 
-export function AiReply({ emailId, recipient }: Props) {
+export function AiReply({ emailId, recipient, onSent }: Props) {
   const [style, setStyle] = useState("professional");
   const [reply, setReply] = useState("");
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,7 @@ export function AiReply({ emailId, recipient }: Props) {
         description: recipient ? `Sent to ${recipient}` : undefined,
       });
       setConfirmOpen(false);
+      onSent?.();
     } catch (err) {
       toast.error("Could not send reply", {
         description: err instanceof Error ? err.message : undefined,

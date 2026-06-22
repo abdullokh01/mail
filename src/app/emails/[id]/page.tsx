@@ -23,6 +23,16 @@ export default async function EmailDetailPage({
 
   if (!email) notFound();
 
+  // Opening an email counts as reading + reviewing it, so it drops out of the
+  // "needs attention" list. Stamp reviewedAt once (keep the original time).
+  await prisma.email.update({
+    where: { id: email.id },
+    data: {
+      isRead: true,
+      ...(email.reviewedAt ? {} : { reviewedAt: new Date() }),
+    },
+  });
+
   // Sanitize on the server (Node) — avoids shipping a jsdom-based sanitizer.
   const safeBodyHtml = sanitizeEmailHtml(email.bodyHtml);
 

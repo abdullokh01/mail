@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
 
   if (filter === "critical") {
     where.analysis = { priority: "CRITICAL" };
+  } else if (filter === "high") {
+    where.analysis = { priority: "HIGH" };
   } else if (filter === "reply") {
     where.analysis = { suggestedAction: "REPLY" };
   } else if (filter === "fyi") {
@@ -43,6 +45,7 @@ export async function GET(req: NextRequest) {
       preview: true,
       attachmentCount: true,
       isRead: true,
+      reviewedAt: true,
       repliedAt: true,
       analysis: true,
     },

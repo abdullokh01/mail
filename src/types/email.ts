@@ -30,16 +30,25 @@ export interface EmailDTO {
   attachmentCount: number;
   attachments?: EmailAttachmentDTO[] | null;
   isRead: boolean;
+  reviewedAt?: string | Date | null;
   repliedAt?: string | Date | null;
   analysis: AnalysisDTO | null;
 }
 
-export interface DashboardStats {
+/** Per-card breakdown of where each email sits in its lifecycle. */
+export interface StatBreakdown {
   total: number;
-  critical: number;
-  high: number;
-  needReply: number;
-  fyi: number;
+  needsReview: number; // not reviewed and not replied
+  reviewed: number; // reviewed (opened/ignored) but not replied
+  replied: number; // replied from the app
+}
+
+export interface DashboardStats {
+  total: number; // total analyzed emails
+  critical: StatBreakdown;
+  high: StatBreakdown;
+  reply: StatBreakdown;
+  fyi: StatBreakdown;
 }
 
 export interface InsightStats {

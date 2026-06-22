@@ -46,17 +46,11 @@ const cards: {
 ];
 
 export function StatCards({ stats, active, onSelect }: Props) {
-  const value: Record<FilterKey, number> = {
-    critical: stats.critical,
-    high: stats.high,
-    reply: stats.needReply,
-    fyi: stats.fyi,
-  };
-
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {cards.map((c) => {
         const isActive = active === c.key;
+        const b = stats[c.key];
         return (
           <button
             key={c.key}
@@ -77,23 +71,41 @@ export function StatCards({ stats, active, onSelect }: Props) {
                   isActive ? "opacity-100" : "opacity-0"
                 )}
               />
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {c.label}
-                  </p>
-                  <p className="text-3xl font-semibold tabular-nums">
-                    {value[c.key]}
-                  </p>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {c.label}
+                    </p>
+                    <p className="text-3xl font-semibold tabular-nums">
+                      {b.total}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-full bg-muted/60",
+                      c.accent
+                    )}
+                  >
+                    {c.icon}
+                  </span>
                 </div>
-                <span
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full bg-muted/60",
-                    c.accent
-                  )}
-                >
-                  {c.icon}
-                </span>
+
+                {/* lifecycle breakdown: to review · reviewed · replied */}
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                    <span className="tabular-nums">{b.needsReview}</span> to review
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                    <span className="tabular-nums">{b.reviewed}</span> reviewed
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <span className="tabular-nums">{b.replied}</span> replied
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </button>

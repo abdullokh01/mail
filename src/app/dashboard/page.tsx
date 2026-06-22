@@ -8,7 +8,26 @@ import type {
   DashboardStats,
   EmailDTO,
   InsightStats,
+  StatBreakdown,
 } from "@/types/email";
+
+type AnalyzedEmail = {
+  reviewedAt: Date | null;
+  repliedAt: Date | null;
+};
+
+/** Split a set of emails into needs-review / reviewed / replied counts. */
+function breakdown(items: AnalyzedEmail[]): StatBreakdown {
+  let needsReview = 0;
+  let reviewed = 0;
+  let replied = 0;
+  for (const e of items) {
+    if (e.repliedAt) replied += 1;
+    else if (e.reviewedAt) reviewed += 1;
+    else needsReview += 1;
+  }
+  return { total: items.length, needsReview, reviewed, replied };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +73,7 @@ export default async function DashboardPage() {
         preview: true,
         attachmentCount: true,
         isRead: true,
+        reviewedAt: true,
         repliedAt: true,
         analysis: true,
       },
@@ -67,11 +87,12 @@ export default async function DashboardPage() {
 
   const stats: DashboardStats = {
     total: analyzed.length,
-    critical: analyzed.filter((e) => e.analysis!.priority === "CRITICAL").length,
-    high: analyzed.filter((e) => e.analysis!.priority === "HIGH").length,
-    needReply: analyzed.filter((e) => e.analysis!.suggestedAction === "REPLY")
-      .length,
-    fyi: analyzed.filter((e) => !e.analysis!.requiresAction).length,
+    critical: breakdown(analyzed.filter((e) => e.analysis!.priority === "CRITICAL")),
+    high: breakdown(analyzed.filter((e) => e.analysis!.priority === "HIGH")),
+    reply: breakdown(
+      analyzed.filter((e) => e.analysis!.suggestedAction === "REPLY")
+    ),
+    fyi: breakdown(analyzed.filter((e) => !e.analysis!.requiresAction)),
   };
 
   const insights: InsightStats = {
@@ -103,11 +124,14 @@ export default async function DashboardPage() {
 
   // Executive brief — only surface what's actionable.
   const brief: string[] = [];
-  if (stats.critical > 0)
-    brief.push(`${stats.critical} critical email(s) need your attention`);
+  if (stats.critical.needsReview > 0)
+    brief.push(
+      `${stats.critical.needsReview} critical email(s) need your attention`
+    );
   if (insights.approvals > 0)
     brief.push(`${insights.approvals} awaiting your approval`);
-  if (stats.needReply > 0) brief.push(`${stats.needReply} need a reply`);
+  if (stats.reply.needsReview > 0)
+    brief.push(`${stats.reply.needsReview} need a reply`);
   if (insights.dueToday > 0)
     brief.push(`${insights.dueToday} due today`);
   if (topCat && topCat[0] !== "OTHER")
@@ -119,7 +143,9 @@ export default async function DashboardPage() {
 
   // Needs-your-attention list: unresolved, ranked by priority then deadline.
   const attention = emails
-    .filter((e) => e.analysis?.requiresAction && !e.repliedAt)
+    .filter(
+      (e) => e.analysis?.requiresAction && !e.repliedAt && !e.reviewedAt
+    )
     .sort((a, b) => {
       const pa = PRIORITY_RANK[a.analysis!.priority];
       const pb = PRIORITY_RANK[b.analysis!.priority];

@@ -60,6 +60,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern", "liga", "calt";
   }
 }
 

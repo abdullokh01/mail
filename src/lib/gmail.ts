@@ -157,6 +157,58 @@ export async function getParsedMessage(
   };
 }
 
+export interface ThreadMessage {
+  id: string;
+  from: { name: string; email: string | null };
+  date: Date;
+  text: string;
+  html: string | null;
+  isFromMe: boolean;
+  attachmentCount: number;
+}
+
+/**
+ * Fetch every message in a Gmail thread, oldest first.
+ * `isFromMe` is true for messages the user sent (carry the SENT label),
+ * which lets the UI lay the thread out as a conversation.
+ */
+export async function getThreadMessages(
+  gmail: gmail_v1.Gmail,
+  threadId: string
+): Promise<ThreadMessage[]> {
+  const res = await gmail.users.threads.get({
+    userId: "me",
+    id: threadId,
+    format: "full",
+  });
+
+  return (res.data.messages ?? []).map((msg) => {
+    const headers = msg.payload?.headers ?? [];
+    const header = (name: string) =>
+      headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ??
+      "";
+
+    const { name, email } = parseFrom(header("from"));
+    const date = msg.internalDate
+      ? new Date(Number(msg.internalDate))
+      : header("date")
+      ? new Date(header("date"))
+      : new Date();
+
+    const { text, html, attachments } = extractParts(msg.payload ?? undefined);
+
+    return {
+      id: msg.id!,
+      from: { name, email },
+      date,
+      text: text.slice(0, 20000),
+      html: html ? html.slice(0, 100000) : null,
+      isFromMe: (msg.labelIds ?? []).includes("SENT"),
+      attachmentCount: attachments.length,
+    };
+  });
+}
+
 function encodeHeader(value: string): string {
   // RFC 2047 encode non-ASCII header values (e.g. names/subjects).
   // eslint-disable-next-line no-control-regex

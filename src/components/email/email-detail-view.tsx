@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -18,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AiReply } from "@/components/email/ai-reply";
+import { ConversationThread } from "@/components/email/conversation-thread";
 import { cn, formatBytes } from "@/lib/utils";
 import {
   actionLabel,
@@ -37,6 +37,25 @@ interface Props {
 export function EmailDetailView({ email, safeBodyHtml, userName }: Props) {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [threadKey, setThreadKey] = useState(0);
+
+  // Opening this email mutated server state (isRead / reviewedAt), and sending
+  // a reply changes repliedAt. router.refresh() busts the client Router Cache
+  // so the dashboard's server-computed stats + attention list come back fresh.
+  const goBack = () => {
+    router.push("/dashboard");
+    router.refresh();
+  };
+
+  // The browser Back/Forward button (popstate) restores the previous page from
+  // the client Router Cache without refetching, so the dashboard's
+  // server-computed stats would stay stale after we mutated read/reviewed state
+  // here. Refresh on popstate to force fresh data on the page we return to.
+  useEffect(() => {
+    const onPopState = () => router.refresh();
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [router]);
   const a = email.analysis;
   const attachments = (email.attachments ?? []) as EmailAttachmentDTO[];
   const safeHtml = safeBodyHtml;
@@ -66,11 +85,9 @@ export function EmailDetailView({ email, safeBodyHtml, userName }: Props) {
       {/* Header bar */}
       <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
         <div className="container flex h-16 items-center justify-between gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Link>
+          <Button variant="ghost" size="sm" onClick={goBack}>
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -213,8 +230,15 @@ export function EmailDetailView({ email, safeBodyHtml, userName }: Props) {
           </CardContent>
         </Card>
 
+        {/* Conversation thread — your sent replies and any responses */}
+        <ConversationThread emailId={email.id} refreshKey={threadKey} />
+
         {/* AI Reply generator */}
-        <AiReply emailId={email.id} recipient={email.senderEmail} />
+        <AiReply
+          emailId={email.id}
+          recipient={email.senderEmail}
+          onSent={() => setThreadKey((k) => k + 1)}
+        />
 
         <p className="pb-4 text-center text-xs text-muted-foreground">
           Drafting on behalf of {userName}
