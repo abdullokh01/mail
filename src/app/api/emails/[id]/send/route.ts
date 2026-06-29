@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getGmailClient, getOAuthClient } from "@/lib/google";
-import { getMessageIdHeader, sendReply } from "@/lib/gmail";
+import { getEmailProvider } from "@/lib/providers";
 
 export const maxDuration = 30;
 
@@ -37,17 +36,15 @@ export async function POST(
   }
 
   try {
-    const oauth = await getOAuthClient(session.user.id);
-    const gmail = getGmailClient(oauth);
+    const provider = getEmailProvider(session.user.id);
 
-    const inReplyTo = await getMessageIdHeader(gmail, email.gmailId).catch(
-      () => null
-    );
+    // Treat gmailId as the In-Reply-To and References parent id.
+    const inReplyTo = email.gmailId;
     const subject = email.subject.toLowerCase().startsWith("re:")
       ? email.subject
       : `Re: ${email.subject}`;
 
-    const sentId = await sendReply(gmail, {
+    const sentId = await provider.sendEmail({
       to: email.senderEmail,
       subject,
       body,
@@ -55,9 +52,35 @@ export async function POST(
       inReplyTo,
     });
 
+    // Mark original email as replied
     await prisma.email.update({
       where: { id: email.id },
       data: { repliedAt: new Date() },
+    });
+
+    // Get sender info (user)
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    // Save the sent email copy into the local database so it is captured by getThreadMessages()
+    await prisma.email.create({
+      data: {
+        userId: session.user.id,
+        gmailId: sentId,
+        threadId: email.threadId || email.gmailId,
+        subject,
+        sender: user?.name || user?.email || "Me",
+        senderEmail: user?.email || null,
+        receivedAt: new Date(),
+        preview: body.slice(0, 200).trim(),
+        body: body,
+        bodyHtml: null,
+        attachmentCount: 0,
+        isRead: true,
+      },
+    }).catch(err => {
+      console.error("Failed to save local copy of sent reply:", err);
     });
 
     return NextResponse.json({ ok: true, id: sentId });
@@ -65,16 +88,9 @@ export async function POST(
     console.error("Send failed:", err);
     const message =
       err instanceof Error ? err.message : "Failed to send reply";
-    // Most common cause: missing gmail.send scope (needs re-login).
-    const needsReauth = /insufficient|scope|permission|forbidden/i.test(
-      message
-    );
     return NextResponse.json(
       {
-        error: needsReauth
-          ? "Missing send permission. Please sign out and sign in again to grant Gmail send access."
-          : message,
-        needsReauth,
+        error: message,
       },
       { status: 500 }
     );

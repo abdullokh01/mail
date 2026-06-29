@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getGmailClient, getOAuthClient } from "@/lib/google";
-import { getParsedMessage } from "@/lib/gmail";
+import { getEmailProvider } from "@/lib/providers";
 import { analyzeEmail } from "@/lib/ai";
 
 export const maxDuration = 30;
 
 /**
- * Re-fetch the message from Gmail (backfilling full body / HTML / attachments)
+ * Re-fetch the message from provider (backfilling full body / HTML / attachments)
  * and re-run the AI analysis for a single email.
  */
 export async function POST(
@@ -30,10 +29,8 @@ export async function POST(
   }
 
   try {
-    // Backfill latest content from Gmail (body, HTML, attachments, read state).
-    const oauth = await getOAuthClient(session.user.id);
-    const gmail = getGmailClient(oauth);
-    const parsed = await getParsedMessage(gmail, email.gmailId);
+    const provider = getEmailProvider(session.user.id);
+    const parsed = await provider.getParsedMessage(email.gmailId);
 
     if (parsed) {
       await prisma.email.update({

@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getGmailClient, getOAuthClient } from "@/lib/google";
-import { getParsedMessage, listMessageIds } from "@/lib/gmail";
+import { getEmailProvider } from "@/lib/providers";
 import { analyzeEmail } from "@/lib/ai";
 
 export interface SyncResult {
@@ -17,16 +16,15 @@ const AI_THROTTLE_MS = Number(process.env.AI_THROTTLE_MS || 0);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Sync Gmail for a user.
+ * Sync emails for a user using the configured EmailProvider.
  * - Lists the newest N message ids.
  * - Stores only messages not already in the DB (incremental).
  * - Runs AI analysis on each newly stored email.
  */
 export async function syncUserEmails(userId: string): Promise<SyncResult> {
-  const oauth = await getOAuthClient(userId);
-  const gmail = getGmailClient(oauth);
+  const provider = getEmailProvider(userId);
 
-  const ids = await listMessageIds(gmail, SYNC_LIMIT);
+  const ids = await provider.listMessageIds(SYNC_LIMIT);
 
   // Which of these do we already have?
   const existing = await prisma.email.findMany({
@@ -42,7 +40,7 @@ export async function syncUserEmails(userId: string): Promise<SyncResult> {
   for (const id of newIds) {
     if (AI_THROTTLE_MS > 0 && created > 0) await sleep(AI_THROTTLE_MS);
     try {
-      const parsed = await getParsedMessage(gmail, id);
+      const parsed = await provider.getParsedMessage(id);
       if (!parsed) continue;
 
       const email = await prisma.email.create({

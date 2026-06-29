@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getGmailClient, getOAuthClient } from "@/lib/google";
-import { getThreadMessages } from "@/lib/gmail";
+import { getEmailProvider } from "@/lib/providers";
 import { sanitizeEmailHtml } from "@/lib/sanitize";
 
 export const maxDuration = 30;
 
 /**
- * Return the full Gmail conversation for an email — the original plus every
- * reply (sent by the user and received back). The focused message is flagged
- * so the UI can show the rest as the reply chain.
+ * Return the full conversation for an email — the original plus every
+ * reply. The focused message is flagged so the UI can show the rest
+ * as the reply chain.
  */
 export async function GET(
   _req: NextRequest,
@@ -34,9 +33,8 @@ export async function GET(
   }
 
   try {
-    const oauth = await getOAuthClient(session.user.id);
-    const gmail = getGmailClient(oauth);
-    const messages = await getThreadMessages(gmail, email.threadId);
+    const provider = getEmailProvider(session.user.id);
+    const messages = await provider.getThreadMessages(email.threadId);
 
     const safe = messages.map((m) => ({
       id: m.id,
@@ -54,13 +52,9 @@ export async function GET(
     console.error("Thread fetch failed:", err);
     const message =
       err instanceof Error ? err.message : "Failed to load conversation";
-    const needsReauth = /insufficient|scope|permission|forbidden/i.test(message);
     return NextResponse.json(
       {
-        error: needsReauth
-          ? "Missing Gmail permission. Please sign out and sign in again."
-          : message,
-        needsReauth,
+        error: message,
       },
       { status: 500 }
     );

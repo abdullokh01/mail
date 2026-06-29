@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getGmailClient, getOAuthClient } from "@/lib/google";
-import { getAttachment } from "@/lib/gmail";
+import { getEmailProvider } from "@/lib/providers";
 import type { EmailAttachment } from "@/lib/gmail";
 
 export const maxDuration = 30;
@@ -30,9 +29,8 @@ export async function GET(
   );
 
   try {
-    const oauth = await getOAuthClient(session.user.id);
-    const gmail = getGmailClient(oauth);
-    const buffer = await getAttachment(gmail, email.gmailId, attachmentId);
+    const provider = getEmailProvider(session.user.id);
+    const buffer = await provider.getAttachment(email.gmailId, attachmentId);
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
